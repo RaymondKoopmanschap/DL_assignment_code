@@ -11,6 +11,7 @@ import numpy as np
 import os
 import cifar10_utils
 import sys
+import pickle
 
 from mlp_numpy import MLP
 from modules import CrossEntropyModule
@@ -20,9 +21,9 @@ from matplotlib import pyplot as plt
 # Default constants
 DNN_HIDDEN_UNITS_DEFAULT = '100'
 LEARNING_RATE_DEFAULT = 2e-3
-MAX_STEPS_DEFAULT = 1500
+MAX_STEPS_DEFAULT = 50  # 1500
 BATCH_SIZE_DEFAULT = 200
-EVAL_FREQ_DEFAULT = 100
+EVAL_FREQ_DEFAULT = 10  # 100
 
 # Directory in which cifar data is saved
 DATA_DIR_DEFAULT = './cifar10/cifar-10-batches-py'
@@ -145,6 +146,15 @@ def train():
   pred = network.forward(x)
   acc = accuracy(pred, y)
   print(acc)
+  loss_and_acc = {}
+  loss_and_acc["iterations"] = iterations
+  loss_and_acc["losses_train"] = losses_train
+  loss_and_acc["losses_test"] = losses_test
+  loss_and_acc["acc_train"] = accuracies_train
+  loss_and_acc["acc_test"] = accuracies_test
+  with open("loss_and_accuracy.pickle", 'wb') as file:
+    pickle.dump(loss_and_acc, file, protocol=pickle.HIGHEST_PROTOCOL)
+
 
   # Plot loss and accuracy curves
   plt.figure(1)

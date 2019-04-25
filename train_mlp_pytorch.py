@@ -126,7 +126,7 @@ def train():
     loss.backward()
     optimizer.step()
 
-    if i % FLAGS.eval_freq == 99:
+    if i % FLAGS.eval_freq == FLAGS.eval_freq - 1:
       print("loss: " + str(loss.item()))
       # Stuff used for plotting
       iterations.append(i)
