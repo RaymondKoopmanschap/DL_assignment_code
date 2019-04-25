@@ -124,13 +124,12 @@ class CustomBatchNormManualFunction(torch.autograd.Function):
     # PUT YOUR CODE HERE  #
     #######################
     batch_size = input.shape[0]
-    assert (input.shape[1] == self.n_neurons), "Input not in the correct shape"
     mean = 1 / batch_size * torch.sum(input, dim=0)
     var = input.var(dim=0, unbiased=False)
     # Broadcasting for the win
     norm = (input - mean) / torch.sqrt(var + eps)
     out = gamma * norm + beta
-    ctx.save_for_backward(mean, var, norm, out, gamma)
+    ctx.save_for_backward(norm, gamma, var)
     ctx.eps = eps
     ########################
     # END OF YOUR CODE    #
@@ -159,7 +158,13 @@ class CustomBatchNormManualFunction(torch.autograd.Function):
     ########################
     # PUT YOUR CODE HERE  #
     #######################
-    raise NotImplementedError
+    normalized, gamma, var = ctx.saved_tensors
+    eps = ctx.eps
+    B = grad_output.shape[0]
+
+    grad_gamma = (grad_output * normalized).sum(0)
+    grad_beta = torch.sum(grad_output, dim=0)
+    grad_input = torch.div(gamma, B * torch.sqrt(var + eps)) * (B * grad_output - grad_beta - grad_gamma * normalized)
     ########################
     # END OF YOUR CODE    #
     #######################
