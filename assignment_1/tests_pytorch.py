@@ -1,15 +1,9 @@
-import numpy as np
-from modules import *
-from train_mlp_pytorch import *
+from assignment_1.train_mlp_pytorch import *
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 import torch.optim as optim
-import torchvision
-import torchvision.transforms as transforms
 import matplotlib.pyplot as plt
-import pickle
-import cifar10_utils
+from assignment_1 import cifar10_utils
 
 torch.manual_seed(42)
 np.random.seed(42)

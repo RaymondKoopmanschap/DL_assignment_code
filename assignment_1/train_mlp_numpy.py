@@ -1,5 +1,5 @@
 """
-This module implements training and evaluation of a Convolutional Neural Network in PyTorch.
+This module implements training and evaluation of a multi-layer perceptron in NumPy.
 You should fill in code into indicated sections.
 """
 from __future__ import absolute_import
@@ -7,27 +7,29 @@ from __future__ import division
 from __future__ import print_function
 
 import argparse
-import numpy as np
-import os
-from convnet_pytorch import ConvNet
-import cifar10_utils
-import torch
-import torch.nn as nn
-import torch.optim as optim
-import matplotlib.pyplot as plt
-import time
+from assignment_1 import cifar10_utils
+
+from assignment_1.mlp_numpy import MLP
+from assignment_1.modules import CrossEntropyModule
+from assignment_1.cifar10_utils import *
+from matplotlib import pyplot as plt
 
 # Default constants
-LEARNING_RATE_DEFAULT = 1e-4
-BATCH_SIZE_DEFAULT = 32
-MAX_STEPS_DEFAULT = 5000
-EVAL_FREQ_DEFAULT = 500
-OPTIMIZER_DEFAULT = 'ADAM'
+DNN_HIDDEN_UNITS_DEFAULT = '100'
+LEARNING_RATE_DEFAULT = 2e-3
+MAX_STEPS_DEFAULT = 50  # 1500
+BATCH_SIZE_DEFAULT = 200
+EVAL_FREQ_DEFAULT = 10  # 100
 
 # Directory in which cifar data is saved
 DATA_DIR_DEFAULT = './cifar10/cifar-10-batches-py'
 
 FLAGS = None
+
+# print(sys.path)
+# cifar10 = cifar10_utils.get_cifar10('cifar10/cifar-10-batches-py')
+# print(cifar10)
+# x, y = cifar10['train'].next_batch(BATCH_SIZE_DEFAULT)
 
 def accuracy(predictions, targets):
   """
@@ -53,7 +55,7 @@ def accuracy(predictions, targets):
   pred_class = np.argmax(predictions, axis=1)
   label_class = np.argmax(targets, axis=1)
   correct = pred_class == label_class
-  accuracy = np.sum(correct) / len(correct)
+  accuracy = np.sum(correct)/len(correct)
   ########################
   # END OF YOUR CODE    #
   #######################
@@ -62,79 +64,93 @@ def accuracy(predictions, targets):
 
 def train():
   """
-  Performs training and evaluation of ConvNet model. 
+  Performs training and evaluation of MLP model. 
 
   TODO:
-  Implement training and evaluation of ConvNet model. Evaluate your model on the whole test set each eval_freq iterations.
+  Implement training and evaluation of MLP model. Evaluate your model on the whole test set each eval_freq iterations.
   """
 
   ### DO NOT CHANGE SEEDS!
   # Set the random seeds for reproducibility
   np.random.seed(42)
 
+  ## Prepare all functions
+  # Get number of units in each hidden layer specified in the string such as 100,100
+  if FLAGS.dnn_hidden_units:
+    dnn_hidden_units = FLAGS.dnn_hidden_units.split(",")
+    dnn_hidden_units = [int(dnn_hidden_unit_) for dnn_hidden_unit_ in dnn_hidden_units]
+  else:
+    dnn_hidden_units = []
+
   ########################
   # PUT YOUR CODE HERE  #
   #######################
-  # Set torch manual seed for reproducability
-  torch.manual_seed(42)
   # Initialization
   l_rate = FLAGS.learning_rate
   batch_size = FLAGS.batch_size
   cifar10 = cifar10_utils.get_cifar10(FLAGS.data_dir)
   x, y = cifar10['train'].next_batch(batch_size)
-  n_channels = x.shape[1]
+  x = x.reshape(batch_size, -1)
+  n_inputs = x.shape[1]
+  n_hidden = dnn_hidden_units
   n_classes = y.shape[1]
-  network = ConvNet(n_channels, n_classes)
-  criterion = nn.CrossEntropyLoss()
-  optimizer = optim.Adam(network.parameters(), l_rate)
+  network = MLP(n_inputs, n_hidden, n_classes)
+  cross_entropy = CrossEntropyModule()
 
   # Stuff used for printing the graphs
-  x_test_np, y_test_np = cifar10['test'].images, cifar10['test'].labels
-  x_test = torch.from_numpy(x_test_np)
-  y_test = np.argmax(y_test_np, axis=1)
-  y_test = torch.from_numpy(y_test)
+  x_test, y_test = cifar10['test'].images, cifar10['test'].labels
+  x_test = x_test.reshape(10000, -1)
   losses_train = []
   losses_test = []
   accuracies_train = []
   accuracies_test = []
   iterations = []
 
-  start = time.time()
+  # Training
   for i in range(FLAGS.max_steps):
-    x_train, y_train = cifar10['train'].next_batch(batch_size)
-    # x = x_train.reshape(batch_size, -1)
-    x = torch.from_numpy(x_train)
-    y = np.argmax(y_train, axis=1)
-    y = torch.from_numpy(y)
+    # Get next batch
+    x, y = cifar10['train'].next_batch(batch_size)
+    x = x.reshape(batch_size, -1)
+    # Forward prop
+    pred = network.forward(x)
+    # Back prop
+    dout = cross_entropy.backward(pred, y)
+    network.backward(dout)
+    # # Update weights
+    for num_layer in range(len(network.lin_layers)):
+      network.lin_layers[num_layer].params['weight'] = network.lin_layers[num_layer].params['weight'] \
+                                                       - l_rate * network.lin_layers[num_layer].grads['weight']
+    if i % FLAGS.eval_freq == 0 or i == FLAGS.max_steps - 1:
+      loss = cross_entropy.forward(pred, y)
+      print("loss: " + str(loss))
 
-    optimizer.zero_grad()
-    pred = network(x)
-    loss = criterion(pred, y)
-    loss.backward()
-    optimizer.step()
-    if i % FLAGS.eval_freq == FLAGS.eval_freq - 1:
-      print(loss.item())
       # Stuff used for plotting
       iterations.append(i)
-      losses_train.append(loss.item())
-      pred_test = network(x_test)
-      loss_test = criterion(pred_test, y_test)
+      loss = cross_entropy.forward(pred, y)
+      losses_train.append(loss)
+      pred_test = network.forward(x_test)
+      loss_test = cross_entropy.forward(pred_test, y_test)
       losses_test.append(loss_test)
-      pred = pred.data.numpy()
-      acc_train = accuracy(pred, y_train)
-      pred_test = pred_test.data.numpy()
-      acc_test = accuracy(pred_test, y_test_np)
+      acc_train = accuracy(pred, y)
+      acc_test = accuracy(pred_test, y_test)
       accuracies_train.append(acc_train)
       accuracies_test.append(acc_test)
-  end = time.time()
-  print(end - start)
-  # Get test set
-  x_test, y_test = cifar10['test'].images, cifar10['test'].labels
-  x_test = torch.from_numpy(x_test)
-  pred = network(x_test)
-  pred = pred.data.numpy()
-  acc = accuracy(pred, y_test)
+
+  # Evaluate test set and get final accuracy
+  x, y = cifar10['test'].images, cifar10['test'].labels
+  x = x.reshape(x.shape[0], -1)
+  pred = network.forward(x)
+  acc = accuracy(pred, y)
   print(acc)
+  loss_and_acc = {}
+  loss_and_acc["iterations"] = iterations
+  loss_and_acc["losses_train"] = losses_train
+  loss_and_acc["losses_test"] = losses_test
+  loss_and_acc["acc_train"] = accuracies_train
+  loss_and_acc["acc_test"] = accuracies_test
+  with open("loss_and_accuracy.pickle", 'wb') as file:
+    pickle.dump(loss_and_acc, file, protocol=pickle.HIGHEST_PROTOCOL)
+
 
   # Plot loss and accuracy curves
   plt.figure(1)
@@ -143,14 +159,14 @@ def train():
   plt.plot(iterations, losses_test, label="Loss curve test")
   plt.xlabel("Number of iterations")
   plt.ylabel("Loss")
-  plt.title("Losses pytorch")
+  plt.title("Losses numpy")
   plt.legend()
   plt.figure(2)
   plt.plot(iterations, accuracies_train, label="Accuracy train")
   plt.plot(iterations, accuracies_test, label="Accuracy test")
   plt.xlabel("Number of iterations")
   plt.ylabel("Loss")
-  plt.title("Accuracies pytorch")
+  plt.title("Accuracies numpy")
   plt.legend()
   plt.show()
   ########################
@@ -180,6 +196,8 @@ def main():
 if __name__ == '__main__':
   # Command line arguments
   parser = argparse.ArgumentParser()
+  parser.add_argument('--dnn_hidden_units', type = str, default = DNN_HIDDEN_UNITS_DEFAULT,
+                      help='Comma separated list of number of units in each hidden layer')
   parser.add_argument('--learning_rate', type = float, default = LEARNING_RATE_DEFAULT,
                       help='Learning rate')
   parser.add_argument('--max_steps', type = int, default = MAX_STEPS_DEFAULT,

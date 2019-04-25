@@ -1,8 +1,6 @@
 import unittest
-import numpy as np
-from mlp_numpy import *
-from train_mlp_numpy import *
-import cifar10_utils
+from assignment_1.train_mlp_numpy import *
+from assignment_1 import cifar10_utils
 from matplotlib import pyplot as plt
 
 np.random.seed(42)

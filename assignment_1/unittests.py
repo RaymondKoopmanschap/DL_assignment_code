@@ -1,11 +1,10 @@
 import unittest
 import numpy as np
 import torch
-import torch.nn as nn
 
-from modules import LinearModule, ReLUModule, SoftMaxModule, CrossEntropyModule
-from custom_batchnorm import CustomBatchNormAutograd, CustomBatchNormManualFunction, CustomBatchNormManualModule
-from gradient_check import eval_numerical_gradient, eval_numerical_gradient_array
+from assignment_1.modules import LinearModule, ReLUModule, SoftMaxModule, CrossEntropyModule
+from assignment_1.custom_batchnorm import CustomBatchNormAutograd, CustomBatchNormManualFunction, CustomBatchNormManualModule
+from assignment_1.gradient_check import eval_numerical_gradient, eval_numerical_gradient_array
 
 def rel_error(x, y):
   return np.max(np.abs(x - y) / (np.maximum(1e-8, np.abs(x) + np.abs(y))))
