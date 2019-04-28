@@ -43,11 +43,10 @@ class VanillaRNN(nn.Module):
 
     def forward(self, x):
         h_t = self.h_init
-        p_t = "empty"
         for i in range(self.seq_length):
             # Reshape into correct form
             x_t = x[:, i]
             x_t = x_t[None, :]
             h_t = torch.tanh(self.W_hx @ x_t + self.W_hh @ h_t + self.b_h)
-            p_t = self.W_ph @ h_t + self.b_p
+        p_t = self.W_ph @ h_t + self.b_p
         return torch.t(p_t)
