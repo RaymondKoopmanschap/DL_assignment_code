@@ -100,7 +100,7 @@ def train():
   iterations = []
 
   start = time.time()
-  for i in range(FLAGS.max_steps):
+  for i in range(2):  # FLAGS.max_steps
     x_train, y_train = cifar10['train'].next_batch(batch_size)
     # x = x_train.reshape(batch_size, -1)
     x = torch.from_numpy(x_train)
@@ -131,10 +131,14 @@ def train():
   # Get test set
   x_test, y_test = cifar10['test'].images, cifar10['test'].labels
   x_test = torch.from_numpy(x_test)
-  pred = network(x_test)
-  pred = pred.data.numpy()
-  acc = accuracy(pred, y_test)
-  print(acc)
+  x_t = x_test[0:2, :, :, :]
+  # print(x_t.shape)
+  # for i in range(len(x_test)):
+  #   if i % 10 == 0:
+  #     pred = network(x_test[i:i+10, :, :, :])
+  #     pred = pred.data.numpy()
+  #     acc = accuracy(pred, y_test[i:i+10])
+  #     print(acc)
 
   # Plot loss and accuracy curves
   plt.figure(1)

@@ -51,8 +51,13 @@ class LinearModule(object):
     ########################
     # PUT YOUR CODE HERE  #
     #######################
+
+    print("weight: " + str(self.params['weight'].shape))
+    print("bias: " + str(self.params['bias'].shape))
+    print("x: " + str(x.shape))
     self.out = (self.params['weight'] @ x.T + self.params['bias']).T
     self.x = x
+    print("out: " + str(self.out.shape))
     ########################
     # END OF YOUR CODE    #
     #######################

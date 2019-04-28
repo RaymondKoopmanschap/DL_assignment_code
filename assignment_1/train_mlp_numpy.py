@@ -6,8 +6,11 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import sys
+sys.path.append("..")
 import argparse
 from assignment_1 import cifar10_utils
+
 
 from assignment_1.mlp_numpy import MLP
 from assignment_1.modules import CrossEntropyModule

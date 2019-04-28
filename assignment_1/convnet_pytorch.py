@@ -86,8 +86,7 @@ class ConvNet(nn.Module):
     #######################
     x = self.layers(x)
     x = x.view(x.shape[0], -1)
-    x = self.lin(x)
-    return x
+    out = self.lin(x)
     ########################
     # END OF YOUR CODE    #
     #######################
