@@ -20,6 +20,7 @@ from __future__ import print_function
 
 import torch
 import torch.nn as nn
+from torch.autograd import Variable
 
 ################################################################################
 
@@ -27,21 +28,36 @@ class VanillaRNN(nn.Module):
 
     def __init__(self, seq_length, input_dim, num_hidden, num_classes, batch_size, device='cpu'):
         super(VanillaRNN, self).__init__()
-        self.h_init = nn.Parameter(torch.zeros(num_hidden, 1))
+        # std = 1/(num_hidden**0.5)
+
+        self.h_init = torch.zeros(num_hidden, batch_size)
+
         self.W_hx = nn.Parameter(torch.empty(num_hidden, input_dim))
         nn.init.xavier_uniform_(self.W_hx)
+        #nn.init.uniform_(self.W_hx, -std, std)
         self.W_hh = nn.Parameter(torch.empty(num_hidden, num_hidden))
         nn.init.xavier_uniform_(self.W_hh)
+        #nn.init.uniform_(self.W_hh, -std, std)
         self.b_h = nn.Parameter(torch.zeros(num_hidden, 1))
         self.W_ph = nn.Parameter(torch.empty(num_classes, num_hidden))
         nn.init.xavier_uniform_(self.W_ph)
+        #nn.init.uniform_(self.W_ph, -std, std)
         self.b_p = nn.Parameter(torch.zeros(num_classes, 1))
 
+        self.num_hidden = num_hidden
         self.seq_length = seq_length
         self.batch_size = batch_size
         self.device = device
 
+        # self.rnn = nn.RNN(input_dim, num_hidden, 1, batch_first=True)
+        # self.linear = nn.Linear(num_hidden, num_classes)
+
     def forward(self, x):
+        # print(x.shape)
+        # x = x[:, :, None]
+        # rnn_out, self.hidden = self.rnn(x)
+        # y_pred = self.linear(rnn_out)
+        # return y_pred[:, 4, :]
         h_t = self.h_init
         for i in range(self.seq_length):
             # Reshape into correct form

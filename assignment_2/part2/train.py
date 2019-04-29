@@ -25,9 +25,12 @@ import argparse
 import numpy as np
 
 import torch
+import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
 
+import sys
+sys.path.append("..")
 from part2.dataset import TextDataset
 from part2.model import TextGenerationModel
 
@@ -36,35 +39,59 @@ from part2.model import TextGenerationModel
 def train(config):
 
     # Initialize the device which to run the model on
-    device = torch.device(config.device)
-
-    # Initialize the model that we are going to use
-    model = TextGenerationModel( ... )  # fixme
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     # Initialize the dataset and data loader (note the +1)
-    dataset = TextDataset( ... )  # fixme
+    dataset = TextDataset("EN_democracy_in_US.txt", 30)
     data_loader = DataLoader(dataset, config.batch_size, num_workers=1)
 
+    # Initialize the model that we are going to use
+    model = TextGenerationModel(config.batch_size, config.seq_length, dataset.vocab_size, config.lstm_num_hidden,
+                                config.lstm_num_layers, device)
+
     # Setup the loss and optimizer
-    criterion = None  # fixme
-    optimizer = None  # fixme
+    criterion = nn.CrossEntropyLoss()
+    optimizer = optim.Adam(model.parameters(), config.learning_rate)
 
     for step, (batch_inputs, batch_targets) in enumerate(data_loader):
 
+        sample = batch_inputs[0]
+        print(sample)
         # Only for time measurement of step through network
         t1 = time.time()
 
         #######################################################
-        # Add more code here ...
+        # Convert to one-hot encoding
+        batch_inputs = torch.stack(batch_inputs)
+        # embedding = nn.Embedding(dataset.vocab_size, config.lstn_num_hidden)
+        # embedding(batch_inputs)
+        identity = torch.eye(dataset.vocab_size)
+        batch_inputs = identity[batch_inputs]
+
+        batch_targets = torch.stack(batch_targets)
+        # print(batch_inputs.shape)
+        # print(batch_targets.shape)
+
+        optimizer.zero_grad()   
+        pred = model(batch_inputs)
+        pred = pred.view(-1, dataset.vocab_size)
+        batch_targets = batch_targets.view(-1)
+        # print(pred.shape)
+
+        loss = criterion(pred, batch_targets)
+        loss.backward()
+        optimizer.step()
         #######################################################
 
-        loss = np.inf   # fixme
-        accuracy = 0.0  # fixme
+        loss = loss.item()
+        max, pred_classes = pred.max(1)
+        correct_pred = pred_classes == batch_targets
+        accuracy = torch.sum(correct_pred).item() / len(correct_pred)
 
         # Just for time measurement
         t2 = time.time()
         examples_per_second = config.batch_size/float(t2-t1)
-
+        train_steps = int(config.train_steps)
         if step % config.print_every == 0:
 
             print("[{}] Train Step {:04d}/{:04d}, Batch Size = {}, Examples/Sec = {:.2f}, "
@@ -73,6 +100,8 @@ def train(config):
                     config.train_steps, config.batch_size, examples_per_second,
                     accuracy, loss
             ))
+        if step == 0:
+            break
 
         if step == config.sample_every:
             # Generate some sentences by sampling from the model
@@ -95,7 +124,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
     # Model params
-    parser.add_argument('--txt_file', type=str, required=True, help="Path to a .txt file to train on")
+    parser.add_argument('--txt_file', type=str, required=False, help="Path to a .txt file to train on") # TODO set required to True
     parser.add_argument('--seq_length', type=int, default=30, help='Length of an input sequence')
     parser.add_argument('--lstm_num_hidden', type=int, default=128, help='Number of hidden units in the LSTM')
     parser.add_argument('--lstm_num_layers', type=int, default=2, help='Number of LSTM layers in the model')
@@ -109,7 +138,7 @@ if __name__ == "__main__":
     parser.add_argument('--learning_rate_step', type=int, default=5000, help='Learning rate step')
     parser.add_argument('--dropout_keep_prob', type=float, default=1.0, help='Dropout keep probability')
 
-    parser.add_argument('--train_steps', type=int, default=1e6, help='Number of training steps')
+    parser.add_argument('--train_steps', type=int, default=1000, help='Number of training steps')
     parser.add_argument('--max_norm', type=float, default=5.0, help='--')
 
     # Misc params
