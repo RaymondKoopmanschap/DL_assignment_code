@@ -21,8 +21,7 @@ import os
 import time
 from datetime import datetime
 import argparse
-
-import numpy as np
+import random
 
 import torch
 import torch.nn as nn
@@ -33,16 +32,59 @@ import sys
 sys.path.append("..")
 from part2.dataset import TextDataset
 from part2.model import TextGenerationModel
+# from tensorboardX import SummaryWriter
 
 ################################################################################
 
 def train(config):
 
+    def convert_to_right_format_batch(batch_inputs, batch_targets):
+        # Convert to one-hot encoding
+        batch_inputs = torch.stack(batch_inputs)
+        # embedding = nn.Embedding(dataset.vocab_size, config.lstn_num_hidden)
+        # embedding(batch_inputs)
+        identity = torch.eye(dataset.vocab_size)
+        batch_inputs = identity[batch_inputs]
+
+        batch_targets = torch.stack(batch_targets)
+        # print(batch_inputs.shape)
+        # print(batch_targets.shape)
+
+        return batch_inputs, batch_targets
+
+    def convert_sample_to_sentence(sample_input, sample_output):
+        sample_input = torch.stack(sample_input)
+        input_data = sample_input[:, 0]
+        input_data = input_data.tolist()
+        sample_output = torch.stack(sample_output)
+        output = sample_output[:, 0]
+        output = output.tolist()
+        input_data = dataset.convert_to_string(input_data)
+        output = dataset.convert_to_string(output)
+        return input_data, output
+
+    def print_sequence_to_sequence_prediction():
+        testset = TextDataset("grim_fairy_tales.txt", 30)
+        test_loader = DataLoader(testset, 1, num_workers=1)
+        for step2, (test_inputs, test_targets) in enumerate(test_loader):
+            input_sentence, output_sentence = convert_sample_to_sentence(test_inputs, test_targets)
+            print(input_sentence)
+            print(output_sentence)
+            test_inputs, test_targets = convert_to_right_format_batch(test_inputs, test_targets)
+            pred = model(test_inputs)
+            pred = pred.view(-1, dataset.vocab_size)
+            max, pred_classes = pred.max(1)
+            pred_classes = pred_classes.tolist()
+            pred_classes = dataset.convert_to_string(pred_classes)
+            print(pred_classes)
+            if step2 == 0:
+                break
+
     # Initialize the device which to run the model on
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-    # Initialize the dataset and data loader (note the +1)
-    dataset = TextDataset("EN_democracy_in_US.txt", 30)
+    # Initialize the dataset and data loader
+    dataset = TextDataset("Rationality_From_AI_to_Zombies.txt", 30)
     data_loader = DataLoader(dataset, config.batch_size, num_workers=1)
 
     # Initialize the model that we are going to use
@@ -55,25 +97,16 @@ def train(config):
 
     for step, (batch_inputs, batch_targets) in enumerate(data_loader):
 
-        sample = batch_inputs[0]
-        print(sample)
         # Only for time measurement of step through network
         t1 = time.time()
 
         #######################################################
         # Convert to one-hot encoding
-        batch_inputs = torch.stack(batch_inputs)
-        # embedding = nn.Embedding(dataset.vocab_size, config.lstn_num_hidden)
-        # embedding(batch_inputs)
-        identity = torch.eye(dataset.vocab_size)
-        batch_inputs = identity[batch_inputs]
-
-        batch_targets = torch.stack(batch_targets)
-        # print(batch_inputs.shape)
-        # print(batch_targets.shape)
-
-        optimizer.zero_grad()   
-        pred = model(batch_inputs)
+        batch_inputs, batch_targets = convert_to_right_format_batch(batch_inputs, batch_targets)
+        optimizer.zero_grad()
+        h = torch.zeros(config.lstm_num_layers, config.batch_size, config.lstm_num_hidden)
+        c = torch.zeros(config.lstm_num_layers, config.batch_size, config.lstm_num_hidden)
+        pred, _, _ = model(batch_inputs, h, c)
         pred = pred.view(-1, dataset.vocab_size)
         batch_targets = batch_targets.view(-1)
         # print(pred.shape)
@@ -97,17 +130,41 @@ def train(config):
             print("[{}] Train Step {:04d}/{:04d}, Batch Size = {}, Examples/Sec = {:.2f}, "
                   "Accuracy = {:.2f}, Loss = {:.3f}".format(
                     datetime.now().strftime("%Y-%m-%d %H:%M"), step,
-                    config.train_steps, config.batch_size, examples_per_second,
+                    train_steps, config.batch_size, examples_per_second,
                     accuracy, loss
             ))
-        if step == 0:
-            break
 
-        if step == config.sample_every:
+        if step % config.sample_every == 0:
             # Generate some sentences by sampling from the model
+            # print_sequence_to_sequence_prediction()
+            h = torch.zeros(config.lstm_num_layers, 1, config.lstm_num_hidden)
+            c = torch.zeros(config.lstm_num_layers, 1, config.lstm_num_hidden)
+            T = None  # Set the temperature
+            softmax = nn.Softmax(dim=1)
+            rnd_char = random.choice(list(dataset._ix_to_char))
+            pred = torch.zeros(1, 1, dataset.vocab_size)
+            pred[0][0][rnd_char] = 1
+            predictions = [rnd_char]
+            for i in range(config.seq_length):
+                pred, h, c = model(pred, h, c)
+                out = pred.view(-1, dataset.vocab_size)
+                if T is not None:
+                    prob_dis = softmax(out / T)
+                    pred_class = torch.multinomial(prob_dis, 1)
+                else:
+                    max, pred_class = out.max(1)
+                predictions.append(pred_class.item())
+                pred = torch.zeros(1, 1, dataset.vocab_size)
+                pred[0][0][pred_class.item()] = 1
+            predictions = dataset.convert_to_string(predictions)
+            print(predictions)
+
+
+
+
             pass
 
-        if step == config.train_steps:
+        if step == train_steps:
             # If you receive a PyTorch data-loader error, check this bug report:
             # https://github.com/pytorch/pytorch/pull/9655
             break
@@ -131,14 +188,14 @@ if __name__ == "__main__":
 
     # Training params
     parser.add_argument('--batch_size', type=int, default=64, help='Number of examples to process in a batch')
-    parser.add_argument('--learning_rate', type=float, default=2e-3, help='Learning rate')
+    parser.add_argument('--learning_rate', type=float, default=1e-2, help='Learning rate')
 
     # It is not necessary to implement the following three params, but it may help training.
     parser.add_argument('--learning_rate_decay', type=float, default=0.96, help='Learning rate decay fraction')
     parser.add_argument('--learning_rate_step', type=int, default=5000, help='Learning rate step')
     parser.add_argument('--dropout_keep_prob', type=float, default=1.0, help='Dropout keep probability')
 
-    parser.add_argument('--train_steps', type=int, default=1000, help='Number of training steps')
+    parser.add_argument('--train_steps', type=int, default=3000, help='Number of training steps')
     parser.add_argument('--max_norm', type=float, default=5.0, help='--')
 
     # Misc params

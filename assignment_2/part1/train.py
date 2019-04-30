@@ -85,10 +85,10 @@ def train(config):
             loss.backward()
             optimizer.step()
 
-            # if step == 0:
-            #     print(batch_inputs.shape)
-            #     print(batch_targets.shape)
-            #     print(pred.shape)
+            if step == 0:
+                print(batch_inputs.shape)
+                print(batch_targets.shape)
+                print(pred.shape)
             ############################################################################
             # QUESTION: what happens here and why?
             # ANSWER: it makes sure the gradients are not too high (thus preventing exploding gradients)
@@ -171,12 +171,12 @@ if __name__ == "__main__":
 
     # Model params
     parser.add_argument('--model_type', type=str, default="RNN", help="Model type, should be 'RNN' or 'LSTM'")
-    parser.add_argument('--input_length', type=int, default=[20], help='Length of an input sequence')
+    parser.add_argument('--input_length', type=int, default=[25], help='Length of an input sequence')
     parser.add_argument('--input_dim', type=int, default=1, help='Dimensionality of input sequence')
     parser.add_argument('--num_classes', type=int, default=10, help='Dimensionality of output sequence')
     parser.add_argument('--num_hidden', type=int, default=128, help='Number of hidden units in the model')
     parser.add_argument('--batch_size', type=int, default=128, help='Number of examples to process in a batch')
-    parser.add_argument('--learning_rate', type=float, default=0.01, help='Learning rate')
+    parser.add_argument('--learning_rate', type=float, default=0.001, help='Learning rate')
     parser.add_argument('--train_steps', type=int, default=2000, help='Number of training steps')  # 10000
     parser.add_argument('--max_norm', type=float, default=10.0)
     parser.add_argument('--device', type=str, default="cpu", help="Training device 'cpu' or 'cuda:0'")  # cuda:0

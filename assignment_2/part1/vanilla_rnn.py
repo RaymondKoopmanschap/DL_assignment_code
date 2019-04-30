@@ -33,14 +33,14 @@ class VanillaRNN(nn.Module):
         self.h_init = torch.zeros(num_hidden, batch_size)
 
         self.W_hx = nn.Parameter(torch.empty(num_hidden, input_dim))
-        nn.init.xavier_uniform_(self.W_hx)
+        nn.init.orthogonal_(self.W_hx)
         #nn.init.uniform_(self.W_hx, -std, std)
         self.W_hh = nn.Parameter(torch.empty(num_hidden, num_hidden))
-        nn.init.xavier_uniform_(self.W_hh)
+        nn.init.orthogonal_(self.W_hh)
         #nn.init.uniform_(self.W_hh, -std, std)
         self.b_h = nn.Parameter(torch.zeros(num_hidden, 1))
         self.W_ph = nn.Parameter(torch.empty(num_classes, num_hidden))
-        nn.init.xavier_uniform_(self.W_ph)
+        nn.init.orthogonal_(self.W_ph)
         #nn.init.uniform_(self.W_ph, -std, std)
         self.b_p = nn.Parameter(torch.zeros(num_classes, 1))
 
