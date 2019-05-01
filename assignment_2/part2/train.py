@@ -22,6 +22,7 @@ import time
 from datetime import datetime
 import argparse
 import random
+import pickle
 
 import torch
 import torch.nn as nn
@@ -84,7 +85,7 @@ def train(config):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     # Initialize the dataset and data loader
-    dataset = TextDataset("Rationality_From_AI_to_Zombies.txt", 30)
+    dataset = TextDataset("Podcast_Paul.txt", 30)
     data_loader = DataLoader(dataset, config.batch_size, num_workers=1)
 
     # Initialize the model that we are going to use
@@ -95,17 +96,31 @@ def train(config):
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), config.learning_rate)
 
+    # Loading model if available
+    load_model = False
+    if load_model:
+        checkpoint = torch.load("model1000.pt")
+        model.load_state_dict(checkpoint["model_state"])
+        optimizer.load_state_dict((checkpoint["optimizer_state"]))
+        dataset = checkpoint["dataset"]
+        data_loader = DataLoader(dataset, config.batch_size, num_workers=1)
+        offset = 1000
+
     for step, (batch_inputs, batch_targets) in enumerate(data_loader):
 
         # Only for time measurement of step through network
         t1 = time.time()
 
         #######################################################
+        # Convert to real step size (because training is resumed)
+        step = step + offset
+
         # Convert to one-hot encoding
         batch_inputs, batch_targets = convert_to_right_format_batch(batch_inputs, batch_targets)
         optimizer.zero_grad()
-        h = torch.zeros(config.lstm_num_layers, config.batch_size, config.lstm_num_hidden)
-        c = torch.zeros(config.lstm_num_layers, config.batch_size, config.lstm_num_hidden)
+        batch_size = batch_inputs.shape[1]
+        h = torch.zeros(config.lstm_num_layers, batch_size, config.lstm_num_hidden)
+        c = torch.zeros(config.lstm_num_layers, batch_size, config.lstm_num_hidden)
         pred, _, _ = model(batch_inputs, h, c)
         pred = pred.view(-1, dataset.vocab_size)
         batch_targets = batch_targets.view(-1)
@@ -123,7 +138,7 @@ def train(config):
 
         # Just for time measurement
         t2 = time.time()
-        examples_per_second = config.batch_size/float(t2-t1)
+        examples_per_second = batch_size/float(t2-t1)
         train_steps = int(config.train_steps)
         if step % config.print_every == 0:
 
@@ -131,8 +146,7 @@ def train(config):
                   "Accuracy = {:.2f}, Loss = {:.3f}".format(
                     datetime.now().strftime("%Y-%m-%d %H:%M"), step,
                     train_steps, config.batch_size, examples_per_second,
-                    accuracy, loss
-            ))
+                    accuracy, loss))
 
         if step % config.sample_every == 0:
             # Generate some sentences by sampling from the model
@@ -159,7 +173,16 @@ def train(config):
             predictions = dataset.convert_to_string(predictions)
             print(predictions)
 
-
+        # Save model every 5.000 steps
+        if step % 5000 == 0:
+            filename = "modelPaul" + str(step) + ".pt"
+            torch.save({
+                        "dataset": dataset,
+                        "model_state": model.state_dict(),
+                        "optimizer_state": optimizer.state_dict(),
+                        "accuracy": accuracy,
+                        "loss": loss,
+                        "offset": step}, filename)
 
 
             pass
@@ -195,13 +218,16 @@ if __name__ == "__main__":
     parser.add_argument('--learning_rate_step', type=int, default=5000, help='Learning rate step')
     parser.add_argument('--dropout_keep_prob', type=float, default=1.0, help='Dropout keep probability')
 
-    parser.add_argument('--train_steps', type=int, default=3000, help='Number of training steps')
+    parser.add_argument('--train_steps', type=int, default=100000, help='Number of training steps')
     parser.add_argument('--max_norm', type=float, default=5.0, help='--')
 
     # Misc params
     parser.add_argument('--summary_path', type=str, default="./summaries/", help='Output path for summaries')
-    parser.add_argument('--print_every', type=int, default=5, help='How often to print training progress')
-    parser.add_argument('--sample_every', type=int, default=100, help='How often to sample from the model')
+    parser.add_argument('--print_every', type=int, default=1000, help='How often to print training progress')
+    parser.add_argument('--sample_every', type=int, default=1000, help='How often to sample from the model')
+
+    # Extra added parameters
+
 
     config = parser.parse_args()
 
