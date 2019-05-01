@@ -95,6 +95,7 @@ def train(config):
     # Setup the loss and optimizer
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), config.learning_rate)
+    offset = 0
 
     # Loading model if available
     load_model = False
@@ -175,7 +176,7 @@ def train(config):
 
         # Save model every 5.000 steps
         if step % 5000 == 0:
-            filename = "modelPaul" + str(step) + ".pt"
+            filename = "./Paul_model/modelPaul" + str(step) + ".pt"
             torch.save({
                         "dataset": dataset,
                         "model_state": model.state_dict(),
