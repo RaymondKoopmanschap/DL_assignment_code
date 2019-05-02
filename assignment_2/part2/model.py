@@ -33,12 +33,8 @@ class TextGenerationModel(nn.Module):
         self.embedding = nn.Embedding(vocabulary_size, vocabulary_size)
 
     def forward(self, x, h, c):
-        #emb = self.embedding(x)
+        # emb = self.embedding(x)
         lstm_out, (h, c) = self.lstm(x, (h, c))
-        # print("size h: " + str(self.hidden.shape))
-        # print("size c: " + str(self.cell.shape))
         y_pred = self.linear(lstm_out)
-        # print(lstm_out.shape)
-        # print(y_pred.shape)
         return y_pred, h, c
         pass

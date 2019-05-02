@@ -22,7 +22,6 @@ import time
 from datetime import datetime
 import argparse
 import random
-import pickle
 
 import torch
 import torch.nn as nn
@@ -46,11 +45,7 @@ def train(config):
         # embedding(batch_inputs)
         identity = torch.eye(dataset.vocab_size)
         batch_inputs = identity[batch_inputs]
-
         batch_targets = torch.stack(batch_targets)
-        # print(batch_inputs.shape)
-        # print(batch_targets.shape)
-
         return batch_inputs, batch_targets
 
     def convert_sample_to_sentence(sample_input, sample_output):
@@ -65,7 +60,7 @@ def train(config):
         return input_data, output
 
     def print_sequence_to_sequence_prediction():
-        testset = TextDataset("grim_fairy_tales.txt", 30)
+        testset = TextDataset(config.txt_file, 30)
         test_loader = DataLoader(testset, 1, num_workers=1)
         for step2, (test_inputs, test_targets) in enumerate(test_loader):
             input_sentence, output_sentence = convert_sample_to_sentence(test_inputs, test_targets)
@@ -85,7 +80,7 @@ def train(config):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     # Initialize the dataset and data loader
-    dataset = TextDataset("Podcast_Paul.txt", 30)
+    dataset = TextDataset(config.txt_file, 30)
     data_loader = DataLoader(dataset, config.batch_size, num_workers=1)
 
     # Initialize the model that we are going to use
@@ -98,14 +93,14 @@ def train(config):
     offset = 0
 
     # Loading model if available
-    load_model = False
-    if load_model:
-        checkpoint = torch.load("model1000.pt")
-        model.load_state_dict(checkpoint["model_state"])
-        optimizer.load_state_dict((checkpoint["optimizer_state"]))
-        dataset = checkpoint["dataset"]
-        data_loader = DataLoader(dataset, config.batch_size, num_workers=1)
-        offset = 1000
+    # load_model = False
+    # if load_model:
+    #     checkpoint = torch.load("model1000.pt")
+    #     model.load_state_dict(checkpoint["model_state"])
+    #     optimizer.load_state_dict((checkpoint["optimizer_state"]))
+    #     dataset = checkpoint["dataset"]
+    #     data_loader = DataLoader(dataset, config.batch_size, num_workers=1)
+    #     offset = checkpoint["offset"]
 
     for step, (batch_inputs, batch_targets) in enumerate(data_loader):
 
@@ -113,7 +108,7 @@ def train(config):
         t1 = time.time()
 
         #######################################################
-        # Convert to real step size (because training is resumed)
+        # Convert to real step size (because training is resumed otherwise 0)
         step = step + offset
 
         # Convert to one-hot encoding
@@ -174,9 +169,9 @@ def train(config):
             predictions = dataset.convert_to_string(predictions)
             print(predictions)
 
-        # Save model every 5.000 steps
-        if step % 5000 == 0:
-            filename = "./Paul_model/modelPaul" + str(step) + ".pt"
+        # Save model every ... steps
+        if step % config.save_every == 0:
+            filename = "rationality_model/model" + str(step) + ".pt"
             torch.save({
                         "dataset": dataset,
                         "model_state": model.state_dict(),
@@ -184,8 +179,6 @@ def train(config):
                         "accuracy": accuracy,
                         "loss": loss,
                         "offset": step}, filename)
-
-
             pass
 
         if step == train_steps:
@@ -205,7 +198,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
     # Model params
-    parser.add_argument('--txt_file', type=str, required=False, help="Path to a .txt file to train on") # TODO set required to True
+    parser.add_argument('--txt_file', type=str, required=True, help="Path to a .txt file to train on")
     parser.add_argument('--seq_length', type=int, default=30, help='Length of an input sequence')
     parser.add_argument('--lstm_num_hidden', type=int, default=128, help='Number of hidden units in the LSTM')
     parser.add_argument('--lstm_num_layers', type=int, default=2, help='Number of LSTM layers in the model')
@@ -219,7 +212,7 @@ if __name__ == "__main__":
     parser.add_argument('--learning_rate_step', type=int, default=5000, help='Learning rate step')
     parser.add_argument('--dropout_keep_prob', type=float, default=1.0, help='Dropout keep probability')
 
-    parser.add_argument('--train_steps', type=int, default=100000, help='Number of training steps')
+    parser.add_argument('--train_steps', type=int, default=10000, help='Number of training steps')
     parser.add_argument('--max_norm', type=float, default=5.0, help='--')
 
     # Misc params
@@ -227,8 +220,8 @@ if __name__ == "__main__":
     parser.add_argument('--print_every', type=int, default=1000, help='How often to print training progress')
     parser.add_argument('--sample_every', type=int, default=1000, help='How often to sample from the model')
 
-    # Extra added parameters
-
+    # Extra params
+    parser.add_argument('--save_every', type=int, default=1000000, help='How often to save the model')
 
     config = parser.parse_args()
 
