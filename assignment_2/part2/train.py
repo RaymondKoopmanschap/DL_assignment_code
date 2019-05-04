@@ -149,8 +149,8 @@ def train(config):
         if step % config.sample_every == 0:
             # Generate some sentences by sampling from the model
             # print_sequence_to_sequence_prediction()
-            h = torch.zeros(config.lstm_num_layers, 1, config.lstm_num_hidden)
-            c = torch.zeros(config.lstm_num_layers, 1, config.lstm_num_hidden)
+            h = torch.zeros(config.lstm_num_layers, 1, config.lstm_num_hidden).to(device)
+            c = torch.zeros(config.lstm_num_layers, 1, config.lstm_num_hidden).to(device)
             T = None  # Set the temperature
             softmax = nn.Softmax(dim=1)
             rnd_char = random.choice(list(dataset._ix_to_char))
