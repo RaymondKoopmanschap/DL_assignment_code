@@ -154,10 +154,11 @@ def train(config):
             T = None  # Set the temperature
             softmax = nn.Softmax(dim=1)
             rnd_char = random.choice(list(dataset._ix_to_char))
-            pred = torch.zeros(1, 1, dataset.vocab_size).to(device)
+            pred = torch.zeros(1, 1, dataset.vocab_size)
             pred[0][0][rnd_char] = 1
             predictions = [rnd_char]
             for i in range(config.seq_length):
+                pred = pred.to(device)
                 pred, h, c = model(pred, h, c)
                 out = pred.view(-1, dataset.vocab_size)
                 if T is not None:
