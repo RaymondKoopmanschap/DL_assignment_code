@@ -78,6 +78,7 @@ def train(config):
 
     # Initialize the device which to run the model on
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    print(device)
 
     # Initialize the dataset and data loader
     dataset = TextDataset(config.txt_file, 30)
@@ -116,8 +117,8 @@ def train(config):
         batch_inputs, batch_targets.to(device)
         optimizer.zero_grad()
         batch_size = batch_inputs.shape[1]
-        h = torch.zeros(config.lstm_num_layers, batch_size, config.lstm_num_hidden)
-        c = torch.zeros(config.lstm_num_layers, batch_size, config.lstm_num_hidden)
+        h = torch.zeros(config.lstm_num_layers, batch_size, config.lstm_num_hidden).to(device)
+        c = torch.zeros(config.lstm_num_layers, batch_size, config.lstm_num_hidden).to(device)
         pred, _, _ = model(batch_inputs, h, c)
         pred = pred.view(-1, dataset.vocab_size)
         batch_targets = batch_targets.view(-1)
