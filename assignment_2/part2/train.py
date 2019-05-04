@@ -114,7 +114,7 @@ def train(config):
 
         # Convert to one-hot encoding
         batch_inputs, batch_targets = convert_to_right_format_batch(batch_inputs, batch_targets)
-        batch_inputs, batch_targets.to(device)
+        batch_inputs, batch_targets = batch_inputs.to(device), batch_targets.to(device)
         optimizer.zero_grad()
         batch_size = batch_inputs.shape[1]
         h = torch.zeros(config.lstm_num_layers, batch_size, config.lstm_num_hidden).to(device)
