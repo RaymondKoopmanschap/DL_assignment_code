@@ -85,7 +85,7 @@ def train(config):
 
     # Initialize the model that we are going to use
     model = TextGenerationModel(config.batch_size, config.seq_length, dataset.vocab_size, config.lstm_num_hidden,
-                                config.lstm_num_layers, device)
+                                config.lstm_num_layers, device).to(device)
 
     # Setup the loss and optimizer
     criterion = nn.CrossEntropyLoss()
@@ -113,6 +113,7 @@ def train(config):
 
         # Convert to one-hot encoding
         batch_inputs, batch_targets = convert_to_right_format_batch(batch_inputs, batch_targets)
+        batch_inputs, batch_targets.to(device)
         optimizer.zero_grad()
         batch_size = batch_inputs.shape[1]
         h = torch.zeros(config.lstm_num_layers, batch_size, config.lstm_num_hidden)

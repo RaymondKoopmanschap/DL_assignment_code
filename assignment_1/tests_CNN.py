@@ -77,7 +77,7 @@ optimizer = optim.Adam(network.parameters(), l_rate)
 
 # Training
 start = time.time()
-for i in range(10):
+for i in range(100):
     x_train, y_train = cifar10['train'].next_batch(batch_size)
     # x = x_train.reshape(batch_size, -1)
     x = torch.from_numpy(x_train)
@@ -108,6 +108,9 @@ print(end - start)
 # Get test set
 x_test, y_test = cifar10['test'].images, cifar10['test'].labels
 x_test = torch.from_numpy(x_test)
+x_test = x_test[0:10,:,:,:]
+y_test = y_test[0:10, :]
+print(y_test.shape)
 pred = network(x_test)
 pred = pred.data.numpy()
 acc = accuracy(pred, y_test)
