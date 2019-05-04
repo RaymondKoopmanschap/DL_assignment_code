@@ -158,6 +158,7 @@ def train(config):
             pred[0][0][rnd_char] = 1
             predictions = [rnd_char]
             for i in range(config.seq_length):
+                pred = pred.to(device)
                 pred, h, c = model(pred, h, c)
                 out = pred.view(-1, dataset.vocab_size)
                 if T is not None:
