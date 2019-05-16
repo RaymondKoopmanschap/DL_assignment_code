@@ -33,6 +33,7 @@ class Generator(nn.Module):
 
         self.linear1 = nn.Linear(args.latent_dim, 128)
         self.leakyReLU = nn.LeakyReLU(0.2)
+        self.dropout = nn.Dropout(0.5)
 
         self.linear2 = nn.Linear(128, 256)
         self.batchnorm2 = nn.BatchNorm1d(256)
@@ -49,18 +50,22 @@ class Generator(nn.Module):
     def forward(self, z):
         x = self.linear1(z)
         x = self.leakyReLU(x)
+        x = self.dropout(x)
 
         x = self.linear2(x)
         x = self.batchnorm2(x)
         x = self.leakyReLU(x)
+        x = self.dropout(x)
 
         x = self.linear3(x)
         x = self.batchnorm3(x)
         x = self.leakyReLU(x)
+        x = self.dropout(x)
 
         x = self.linear4(x)
         x = self.batchnorm4(x)
         x = self.leakyReLU(x)
+        x = self.dropout(x)
 
         x = self.linear5(x)
         x = self.tanh(x)
@@ -112,8 +117,8 @@ def train(dataloader, discriminator, generator, optimizer_G, optimizer_D, device
         for i, (imgs, _) in enumerate(dataloader):
             batch_size = imgs.shape[0]
             imgs = imgs.to(device)
-            real_labels = torch.ones(batch_size, 1, requires_grad=False).to(device)
-            fake_labels = torch.zeros(batch_size, 1, requires_grad=False).to(device)
+            real_labels = torch.ones(batch_size, 1).to(device)
+            fake_labels = torch.zeros(batch_size, 1).to(device)
 
             # Train Generator
             # ---------------
@@ -135,9 +140,9 @@ def train(dataloader, discriminator, generator, optimizer_G, optimizer_D, device
             # Train Discriminator
             # -------------------
             # Real images
-            optimizer_D.zero_grad()
             # noise_image = torch.randn(*imgs.shape) * 0.2
-            # imgs = imgs + noise_image
+            # imgs = imgs + noise_imag
+            optimizer_D.zero_grad()
             real_imgs_probs = discriminator(imgs)
             loss_real_img = criterion(real_imgs_probs, real_labels)
             loss_real_img.backward()
@@ -201,7 +206,7 @@ def main():
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--n_epochs', type=int, default=1,
+    parser.add_argument('--n_epochs', type=int, default=10,
                         help='number of epochs')
     parser.add_argument('--batch_size', type=int, default=64,
                         help='batch size')
