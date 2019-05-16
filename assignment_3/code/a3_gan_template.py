@@ -162,7 +162,7 @@ def train(dataloader, discriminator, generator, optimizer_G, optimizer_D, device
             # Save Images
             # -----------
             batches_done = epoch * len(dataloader) + i
-            if epoch % 10 == 0:
+            if (epoch + 1) % 10 == 0:
                 # You can use the function save_image(Tensor (shape Bx1x28x28),
                 # filename, number of rows, normalize) to save the generated
                 # images, e.g.:
