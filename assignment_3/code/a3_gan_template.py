@@ -111,7 +111,7 @@ def train(dataloader, discriminator, generator, optimizer_G, optimizer_D, device
         start = time.time()
         for i, (imgs, _) in enumerate(dataloader):
             batch_size = imgs.shape[0]
-            imgs.to(device)
+            imgs = imgs.to(device)
             real_labels = torch.ones(batch_size, 1, requires_grad=False).to(device)
             fake_labels = torch.zeros(batch_size, 1, requires_grad=False).to(device)
 
@@ -131,18 +131,19 @@ def train(dataloader, discriminator, generator, optimizer_G, optimizer_D, device
             #     gen_imgs_25 = gen_imgs_view[0:25]
             #     tile(gen_imgs_25, cmap='gray')
             #     plt.savefig('gen_images_' + str(epoch) + '.png')
+
             # Train Discriminator
             # -------------------
+            # Real images
             optimizer_D.zero_grad()
             real_imgs_probs = discriminator(imgs)
             loss_real_img = criterion(real_imgs_probs, real_labels)
             loss_real_img.backward()
-            gen_imgs_probs = discriminator(gen_imgs.detach()) # The generator
 
+            # Fake images
+            gen_imgs_probs = discriminator(gen_imgs.detach()) # The generator
             loss_fake_img = criterion(gen_imgs_probs, fake_labels)
             loss_fake_img.backward()
-            #total_loss = (loss_real_img + loss_fake_img) / 2
-            #total_loss.backward()
             optimizer_D.step()
 
             if i % 100 == 0:
