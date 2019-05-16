@@ -45,7 +45,6 @@ class Generator(nn.Module):
 
         self.linear5 = nn.Linear(1024, 784)
         self.tanh = nn.Tanh()
-        # Then non-linearity
 
     def forward(self, z):
         x = self.linear1(z)
@@ -119,7 +118,7 @@ def train(dataloader, discriminator, generator, optimizer_G, optimizer_D, device
 
             # Train Generator
             # ---------------
-            noise = torch.randn(batch_size, args.latent_dim)
+            noise = torch.randn(batch_size, args.latent_dim).to(device)
             optimizer_G.zero_grad()
             gen_imgs = generator(noise)
             gen_imgs_probs = discriminator(gen_imgs)
