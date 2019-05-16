@@ -9,6 +9,7 @@ from torchvision import datasets
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 from showit import tile
+import time
 
 
 class Generator(nn.Module):
@@ -108,7 +109,8 @@ def train(dataloader, discriminator, generator, optimizer_G, optimizer_D, device
     criterion = nn.BCELoss()
 
     for epoch in range(args.n_epochs):
-        print(epoch)
+        print("epoch: " + str(epoch))
+        start = time.time()
         for i, (imgs, _) in enumerate(dataloader):
 
             batch_size = imgs.shape[0]
@@ -127,11 +129,11 @@ def train(dataloader, discriminator, generator, optimizer_G, optimizer_D, device
             optimizer_G.step()
 
             # Show image
-            if epoch % 5 == 0:
-                gen_imgs_view = gen_imgs.view(batch_size, imgs.shape[2], imgs.shape[3]).detach()
-                gen_imgs_25 = gen_imgs_view[0:25]
-                tile(gen_imgs_25, cmap='gray')
-                plt.savefig('gen_images_' + str(epoch) + '.png')
+            # if epoch % 10 == 0:
+            #     gen_imgs_view = gen_imgs.view(batch_size, imgs.shape[2], imgs.shape[3]).detach()
+            #     gen_imgs_25 = gen_imgs_view[0:25]
+            #     tile(gen_imgs_25, cmap='gray')
+            #     plt.savefig('gen_images_' + str(epoch) + '.png')
             # Train Discriminator
             # -------------------
             optimizer_D.zero_grad()
@@ -152,15 +154,17 @@ def train(dataloader, discriminator, generator, optimizer_G, optimizer_D, device
             # Save Images
             # -----------
             batches_done = epoch * len(dataloader) + i
-            if batches_done % args.save_interval == 0:
+            if epoch % 10 == 0:
                 # You can use the function save_image(Tensor (shape Bx1x28x28),
                 # filename, number of rows, normalize) to save the generated
                 # images, e.g.:
-                # save_image(gen_imgs[:25],
-                #            'images/{}.png'.format(batches_done),
-                #            nrow=5, normalize=True)
+                gen_imgs = gen_imgs.view(batch_size, 1, imgs.shape[2], imgs.shape[3])
+                save_image(gen_imgs[:25],
+                           'images/{}.png'.format(epoch),
+                           nrow=5, normalize=True)
                 pass
-
+        end = time.time()
+        print("time for 1 epoch:" + str(end-start))
 
 def main():
     # Create output image directory
@@ -201,7 +205,7 @@ if __name__ == "__main__":
                         help='learning rate')
     parser.add_argument('--latent_dim', type=int, default=100,
                         help='dimensionality of the latent space')
-    parser.add_argument('--save_interval', type=int, default=500,
+    parser.add_argument('--save_interval', type=int, default=5000,
                         help='save every SAVE_INTERVAL iterations')
     args = parser.parse_args()
 
