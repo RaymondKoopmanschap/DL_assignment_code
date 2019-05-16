@@ -50,22 +50,22 @@ class Generator(nn.Module):
     def forward(self, z):
         x = self.linear1(z)
         x = self.leakyReLU(x)
-        x = self.dropout(x)
+        #x = self.dropout(x)
 
         x = self.linear2(x)
         x = self.batchnorm2(x)
         x = self.leakyReLU(x)
-        x = self.dropout(x)
+        #x = self.dropout(x)
 
         x = self.linear3(x)
         x = self.batchnorm3(x)
         x = self.leakyReLU(x)
-        x = self.dropout(x)
+        #x = self.dropout(x)
 
         x = self.linear4(x)
         x = self.batchnorm4(x)
         x = self.leakyReLU(x)
-        x = self.dropout(x)
+        #x = self.dropout(x)
 
         x = self.linear5(x)
         x = self.tanh(x)
@@ -88,6 +88,7 @@ class Discriminator(nn.Module):
 
         self.linear1 = nn.Linear(784, 512)
         self.leakyReLU = nn.LeakyReLU(0.2)
+        self.dropout = nn.Dropout(0.25)
 
         self.linear2 = nn.Linear(512, 256)
 
@@ -99,12 +100,33 @@ class Discriminator(nn.Module):
         x = img.view(batch_size, -1)
         x = self.linear1(x)
         x = self.leakyReLU(x)
+        x = self.dropout(x)
+
         x = self.linear2(x)
         x = self.leakyReLU(x)
+        x = self.dropout(x)
+
         x = self.linear3(x)
         x = self.sigmoid(x)
 
         return x
+
+def plot_grad_flow(named_parameters):
+    ave_grads = []
+    layers = []
+    for n, p in named_parameters:
+        if(p.requires_grad) and ("bias" not in n):
+            layers.append(n)
+            ave_grads.append(p.grad.abs().mean())
+    plt.plot(ave_grads, alpha=0.3, color="b")
+    plt.hlines(0, 0, len(ave_grads)+1, linewidth=1, color="k" )
+    plt.xticks(range(0,len(ave_grads), 1), layers, rotation="vertical")
+    plt.xlim(xmin=0, xmax=len(ave_grads))
+    plt.xlabel("Layers")
+    plt.ylabel("average gradient")
+    plt.title("Gradient flow")
+    plt.grid(True)
+    plt.show()
 
 
 def train(dataloader, discriminator, generator, optimizer_G, optimizer_D, device):
@@ -147,11 +169,15 @@ def train(dataloader, discriminator, generator, optimizer_G, optimizer_D, device
             loss_real_img = criterion(real_imgs_probs, real_labels)
             loss_real_img.backward()
 
+
             # Fake images
             gen_imgs_probs = discriminator(gen_imgs.detach()) # The generator
             loss_fake_img = criterion(gen_imgs_probs, fake_labels)
             loss_fake_img.backward()
+            # if i % 1000 == 0:
+            #     plot_grad_flow(discriminator.named_parameters())
             optimizer_D.step()
+
 
             if i % 100 == 0:
                 print(loss_gen.item(), loss_real_img.item(), loss_fake_img.item())
@@ -168,7 +194,7 @@ def train(dataloader, discriminator, generator, optimizer_G, optimizer_D, device
                 # images, e.g.:
                 gen_imgs = gen_imgs.view(batch_size, 1, imgs.shape[2], imgs.shape[3])
                 save_image(gen_imgs[:25],
-                           'images/{}.png'.format(epoch),
+                           'images/{}.png'.format(epoch + 1),
                            nrow=5, normalize=True)
                 pass
         end = time.time()
@@ -221,17 +247,19 @@ if __name__ == "__main__":
 
     if args.generate_images:
         generator = Generator()
-        generator.load_state_dict(torch.load('mnist_generator.pt'))
+        generator.load_state_dict(torch.load('mnist_generator.pt', map_location='cpu'))
 
-        noise = torch.randn(2, args.latent_dim)
-        gen_imgs = generator(noise)
-        img1, img2 = gen_imgs[0, :].detach(), gen_imgs[1, :].detach()
-        imgs = x = np.linspace(img1, img2, 9)
-        imgs = imgs.reshape((9, 28, 28))
-        f, ax = plt.subplots(1, 9)
-        for i in range(9):
-            ax[i].imshow(imgs[i, :, :], cmap='gray')
-            ax[i].axis('off')
+        f, ax = plt.subplots(10, 9)
+        for j in range(10):
+            noise = torch.randn(2, args.latent_dim)
+            gen_imgs = generator(noise)
+            img1, img2 = gen_imgs[0, :].detach(), gen_imgs[1, :].detach()
+            imgs = x = np.linspace(img1, img2, 9)
+            imgs = imgs.reshape((9, 28, 28))
+
+            for i in range(9):
+                ax[j,i].imshow(imgs[i, :, :], cmap='gray')
+                ax[j,i].axis('off')
 
         plt.savefig('images/interpolated.png')
         plt.show()
