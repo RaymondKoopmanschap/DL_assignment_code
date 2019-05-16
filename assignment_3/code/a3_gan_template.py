@@ -8,7 +8,6 @@ from torchvision.utils import save_image
 from torchvision import datasets
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
-from showit import tile
 import time
 
 
