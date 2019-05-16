@@ -110,11 +110,10 @@ def train(dataloader, discriminator, generator, optimizer_G, optimizer_D, device
         print("epoch: " + str(epoch))
         start = time.time()
         for i, (imgs, _) in enumerate(dataloader):
-
             batch_size = imgs.shape[0]
             imgs.to(device)
-            real_labels = torch.ones(batch_size, 1, requires_grad=False)
-            fake_labels = torch.zeros(batch_size, 1, requires_grad=False)
+            real_labels = torch.ones(batch_size, 1, requires_grad=False).to(device)
+            fake_labels = torch.zeros(batch_size, 1, requires_grad=False).to(device)
 
             # Train Generator
             # ---------------
@@ -136,15 +135,18 @@ def train(dataloader, discriminator, generator, optimizer_G, optimizer_D, device
             # -------------------
             optimizer_D.zero_grad()
             real_imgs_probs = discriminator(imgs)
-            gen_imgs_probs = discriminator(gen_imgs).detach()  # The generator
             loss_real_img = criterion(real_imgs_probs, real_labels)
+            loss_real_img.backward()
+            gen_imgs_probs = discriminator(gen_imgs.detach()) # The generator
+
             loss_fake_img = criterion(gen_imgs_probs, fake_labels)
-            total_loss = (loss_real_img + loss_fake_img) / 2
-            total_loss.backward()
+            loss_fake_img.backward()
+            #total_loss = (loss_real_img + loss_fake_img) / 2
+            #total_loss.backward()
             optimizer_D.step()
 
             if i % 100 == 0:
-                print(loss_gen.item(), total_loss.item())
+                print(loss_gen.item(), loss_real_img.item(), loss_fake_img.item())
                 acc_real = torch.sum(real_imgs_probs > 0.5).item()/real_imgs_probs.shape[0]
                 acc_fake = torch.sum(gen_imgs_probs < 0.5).item()/gen_imgs_probs.shape[0]
                 print("acc real:" + str(acc_real) + " acc fake:" + str(acc_fake))
@@ -152,7 +154,7 @@ def train(dataloader, discriminator, generator, optimizer_G, optimizer_D, device
             # Save Images
             # -----------
             batches_done = epoch * len(dataloader) + i
-            if epoch % 10 == 0:
+            if batches_done % 500 == 0:
                 # You can use the function save_image(Tensor (shape Bx1x28x28),
                 # filename, number of rows, normalize) to save the generated
                 # images, e.g.:
@@ -177,6 +179,7 @@ def main():
                                                 (0.5,))])),
         batch_size=args.batch_size, shuffle=True)
 
+    torch.manual_seed(42)
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     print(device)
     # Initialize models and optimizers
