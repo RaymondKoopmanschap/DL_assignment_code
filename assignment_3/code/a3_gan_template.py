@@ -1,13 +1,13 @@
 import argparse
 import os
 
+import numpy as np
 import torch
 import torch.nn as nn
 import torchvision.transforms as transforms
 from torchvision.utils import save_image
 from torchvision import datasets
 import matplotlib.pyplot as plt
-import matplotlib.image as mpimg
 import time
 
 
@@ -136,6 +136,8 @@ def train(dataloader, discriminator, generator, optimizer_G, optimizer_D, device
             # -------------------
             # Real images
             optimizer_D.zero_grad()
+            # noise_image = torch.randn(*imgs.shape) * 0.2
+            # imgs = imgs + noise_image
             real_imgs_probs = discriminator(imgs)
             loss_real_img = criterion(real_imgs_probs, real_labels)
             loss_real_img.backward()
@@ -155,7 +157,7 @@ def train(dataloader, discriminator, generator, optimizer_G, optimizer_D, device
             # Save Images
             # -----------
             batches_done = epoch * len(dataloader) + i
-            if batches_done % 500 == 0:
+            if epoch % 10 == 0:
                 # You can use the function save_image(Tensor (shape Bx1x28x28),
                 # filename, number of rows, normalize) to save the generated
                 # images, e.g.:
@@ -194,12 +196,12 @@ def main():
 
     # You can save your generator here to re-use it to generate images for your
     # report, e.g.:
-    # torch.save(generator.state_dict(), "mnist_generator.pt")
+    torch.save(generator.state_dict(), "mnist_generator.pt")
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--n_epochs', type=int, default=200,
+    parser.add_argument('--n_epochs', type=int, default=1,
                         help='number of epochs')
     parser.add_argument('--batch_size', type=int, default=64,
                         help='batch size')
@@ -207,8 +209,30 @@ if __name__ == "__main__":
                         help='learning rate')
     parser.add_argument('--latent_dim', type=int, default=100,
                         help='dimensionality of the latent space')
-    parser.add_argument('--save_interval', type=int, default=5000,
+    parser.add_argument('--save_interval', type=int, default=500,
                         help='save every SAVE_INTERVAL iterations')
+    parser.add_argument('--generate_images', action='store_true', default=False)
     args = parser.parse_args()
 
-    main()
+    if args.generate_images:
+        generator = Generator()
+        generator.load_state_dict(torch.load('mnist_generator.pt'))
+
+        noise = torch.randn(2, args.latent_dim)
+        gen_imgs = generator(noise)
+        img1, img2 = gen_imgs[0, :].detach(), gen_imgs[1, :].detach()
+        imgs = x = np.linspace(img1, img2, 9)
+        imgs = imgs.reshape((9, 28, 28))
+        f, ax = plt.subplots(1, 9)
+        for i in range(9):
+            ax[i].imshow(imgs[i, :, :], cmap='gray')
+            ax[i].axis('off')
+
+        plt.savefig('images/interpolated.png')
+        plt.show()
+
+    else:
+        main()
+
+
+
