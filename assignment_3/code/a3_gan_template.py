@@ -133,7 +133,7 @@ def train(dataloader, discriminator, generator, optimizer_G, optimizer_D, device
                 # images, e.g.:
                 gen_imgs = gen_imgs.view(batch_size, 1, imgs.shape[2], imgs.shape[3])
                 save_image(gen_imgs[:25],
-                           'images/{}.png'.format(epoch + 1),
+                           'images/{}.png'.format(batches_done),
                            nrow=5, normalize=True)
 
         end = time.time()
@@ -171,7 +171,7 @@ def main():
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--n_epochs', type=int, default=1,
+    parser.add_argument('--n_epochs', type=int, default=200,
                         help='number of epochs')
     parser.add_argument('--batch_size', type=int, default=64,
                         help='batch size')
