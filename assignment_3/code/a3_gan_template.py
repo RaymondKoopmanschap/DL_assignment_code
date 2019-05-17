@@ -246,6 +246,9 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.generate_images:
+
+
+
         generator = Generator()
         generator.load_state_dict(torch.load('mnist_generator.pt', map_location='cpu'))
 
@@ -263,6 +266,11 @@ if __name__ == "__main__":
 
         plt.savefig('images/interpolated.png')
         plt.show()
+
+        gen_imgs = gen_imgs.view(2, 1, 28, 28)
+        save_image(gen_imgs,
+                   'images/{}.png'.format('testing'),
+                   nrow=5, normalize=True)
 
     else:
         main()
