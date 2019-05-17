@@ -198,7 +198,7 @@ def train(dataloader, discriminator, generator, optimizer_G, optimizer_D, device
                            nrow=5, normalize=True)
                 pass
             if (epoch + 1) % 100 == 0:
-                torch.save(generator.state_dict(), "mnist_generator_" + str(epoch) + ".pt")
+                torch.save(generator.state_dict(), "images/mnist_generator_" + str(epoch) + ".pt")
 
         end = time.time()
         print("time for 1 epoch:" + str(end-start))
@@ -230,7 +230,7 @@ def main():
 
     # You can save your generator here to re-use it to generate images for your
     # report, e.g.:
-    torch.save(generator.state_dict(), "mnist_generator_" + args.suffix + ".pt")
+    torch.save(generator.state_dict(), "images/mnist_generator_" + args.suffix + ".pt")
 
 
 if __name__ == "__main__":
