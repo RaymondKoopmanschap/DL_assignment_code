@@ -227,7 +227,7 @@ def main():
 
     # You can save your generator here to re-use it to generate images for your
     # report, e.g.:
-    torch.save(generator.state_dict(), "mnist_generator.pt")
+    torch.save(generator.state_dict(), "mnist_generator" + args.suffix + ".pt")
 
 
 if __name__ == "__main__":
@@ -243,6 +243,7 @@ if __name__ == "__main__":
     parser.add_argument('--save_interval', type=int, default=500,
                         help='save every SAVE_INTERVAL iterations')
     parser.add_argument('--generate_images', action='store_true', default=False)
+    parser.add_argument('--suffix', type=str, default='', help='can modify filename')
     args = parser.parse_args()
 
     if args.generate_images:
@@ -257,7 +258,7 @@ if __name__ == "__main__":
             noise = torch.randn(2, args.latent_dim)
             gen_imgs = generator(noise)
             img1, img2 = gen_imgs[0, :].detach(), gen_imgs[1, :].detach()
-            imgs = x = np.linspace(img1, img2, 9)
+            imgs = np.linspace(img1, img2, 9)
             imgs = imgs.reshape((9, 28, 28))
 
             for i in range(9):
