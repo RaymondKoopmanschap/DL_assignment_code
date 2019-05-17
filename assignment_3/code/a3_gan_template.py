@@ -15,25 +15,8 @@ class Generator(nn.Module):
     def __init__(self):
         super(Generator, self).__init__()
 
-        # Construct generator. You are free to experiment with your model,
-        # but the following is a good start:
-        #   Linear1 args.latent_dim -> 128
-        #   LeakyReLU(0.2)
-        #   Linear2 128 -> 256
-        #   Bnorm
-        #   LeakyReLU(0.2)
-        #   Linear3 256 -> 512
-        #   Bnorm
-        #   LeakyReLU(0.2)
-        #   Linear4 512 -> 1024
-        #   Bnorm
-        #   LeakyReLU(0.2)
-        #   Linear5 1024 -> 768  #784 I think
-        #   Output non-linearity
-
         self.linear1 = nn.Linear(args.latent_dim, 128)
         self.leakyReLU = nn.LeakyReLU(0.2)
-        self.dropout = nn.Dropout(0.5)
 
         self.linear2 = nn.Linear(128, 256)
         self.batchnorm2 = nn.BatchNorm1d(256)
@@ -50,22 +33,18 @@ class Generator(nn.Module):
     def forward(self, z):
         x = self.linear1(z)
         x = self.leakyReLU(x)
-        #x = self.dropout(x)
 
         x = self.linear2(x)
         x = self.batchnorm2(x)
         x = self.leakyReLU(x)
-        #x = self.dropout(x)
 
         x = self.linear3(x)
         x = self.batchnorm3(x)
         x = self.leakyReLU(x)
-        #x = self.dropout(x)
 
         x = self.linear4(x)
         x = self.batchnorm4(x)
         x = self.leakyReLU(x)
-        #x = self.dropout(x)
 
         x = self.linear5(x)
         x = self.tanh(x)
@@ -76,15 +55,6 @@ class Generator(nn.Module):
 class Discriminator(nn.Module):
     def __init__(self):
         super(Discriminator, self).__init__()
-
-        # Construct discriminator. You are free to experiment with your model,
-        # but the following is a good start:
-        #   Linear 784 -> 512
-        #   LeakyReLU(0.2)
-        #   Linear 512 -> 256
-        #   LeakyReLU(0.2)
-        #   Linear 256 -> 1
-        #   Output non-linearity
 
         self.linear1 = nn.Linear(784, 512)
         self.leakyReLU = nn.LeakyReLU(0.2)
@@ -111,23 +81,6 @@ class Discriminator(nn.Module):
 
         return x
 
-def plot_grad_flow(named_parameters):
-    ave_grads = []
-    layers = []
-    for n, p in named_parameters:
-        if(p.requires_grad) and ("bias" not in n):
-            layers.append(n)
-            ave_grads.append(p.grad.abs().mean())
-    plt.plot(ave_grads, alpha=0.3, color="b")
-    plt.hlines(0, 0, len(ave_grads)+1, linewidth=1, color="k" )
-    plt.xticks(range(0,len(ave_grads), 1), layers, rotation="vertical")
-    plt.xlim(xmin=0, xmax=len(ave_grads))
-    plt.xlabel("Layers")
-    plt.ylabel("average gradient")
-    plt.title("Gradient flow")
-    plt.grid(True)
-    plt.show()
-
 
 def train(dataloader, discriminator, generator, optimizer_G, optimizer_D, device):
 
@@ -152,43 +105,29 @@ def train(dataloader, discriminator, generator, optimizer_G, optimizer_D, device
             loss_gen.backward()
             optimizer_G.step()
 
-            # Show image
-            # if epoch % 10 == 0:
-            #     gen_imgs_view = gen_imgs.view(batch_size, imgs.shape[2], imgs.shape[3]).detach()
-            #     gen_imgs_25 = gen_imgs_view[0:25]
-            #     tile(gen_imgs_25, cmap='gray')
-            #     plt.savefig('gen_images_' + str(epoch) + '.png')
-
             # Train Discriminator
             # -------------------
-            # Real images
-            # noise_image = torch.randn(*imgs.shape) * 0.2
-            # imgs = imgs + noise_imag
             optimizer_D.zero_grad()
             real_imgs_probs = discriminator(imgs)
             loss_real_img = criterion(real_imgs_probs, real_labels)
             loss_real_img.backward()
 
-
             # Fake images
             gen_imgs_probs = discriminator(gen_imgs.detach()) # The generator
             loss_fake_img = criterion(gen_imgs_probs, fake_labels)
             loss_fake_img.backward()
-            # if i % 1000 == 0:
-            #     plot_grad_flow(discriminator.named_parameters())
             optimizer_D.step()
 
-
-            if i % 100 == 0:
-                print(loss_gen.item(), loss_real_img.item(), loss_fake_img.item())
-                acc_real = torch.sum(real_imgs_probs > 0.5).item()/real_imgs_probs.shape[0]
-                acc_fake = torch.sum(gen_imgs_probs < 0.5).item()/gen_imgs_probs.shape[0]
-                print("acc real:" + str(acc_real) + " acc fake:" + str(acc_fake))
+            # if i % 100 == 0:
+            #     print(loss_gen.item(), loss_real_img.item(), loss_fake_img.item())
+            #     acc_real = torch.sum(real_imgs_probs > 0.5).item()/real_imgs_probs.shape[0]
+            #     acc_fake = torch.sum(gen_imgs_probs < 0.5).item()/gen_imgs_probs.shape[0]
+            #     print("acc real:" + str(acc_real) + " acc fake:" + str(acc_fake))
 
             # Save Images
             # -----------
             batches_done = epoch * len(dataloader) + i
-            if (epoch + 1) % 10 == 0:
+            if batches_done % args.save_interval == 0:
                 # You can use the function save_image(Tensor (shape Bx1x28x28),
                 # filename, number of rows, normalize) to save the generated
                 # images, e.g.:
@@ -196,12 +135,10 @@ def train(dataloader, discriminator, generator, optimizer_G, optimizer_D, device
                 save_image(gen_imgs[:25],
                            'images/{}.png'.format(epoch + 1),
                            nrow=5, normalize=True)
-                pass
-            if (epoch + 1) % 100 == 0:
-                torch.save(generator.state_dict(), "images/mnist_generator_" + str(epoch) + ".pt")
 
         end = time.time()
         print("time for 1 epoch:" + str(end-start))
+
 
 def main():
     # Create output image directory
@@ -216,7 +153,6 @@ def main():
                                                 (0.5,))])),
         batch_size=args.batch_size, shuffle=True)
 
-    torch.manual_seed(42)
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     print(device)
     # Initialize models and optimizers
@@ -235,7 +171,7 @@ def main():
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--n_epochs', type=int, default=10,
+    parser.add_argument('--n_epochs', type=int, default=1,
                         help='number of epochs')
     parser.add_argument('--batch_size', type=int, default=64,
                         help='batch size')
@@ -255,26 +191,27 @@ if __name__ == "__main__":
 
         generator = Generator()
         generator.load_state_dict(torch.load('mnist_generator.pt', map_location='cpu'))
+        generator.eval()
 
-        f, ax = plt.subplots(10, 9)
-        for j in range(10):
-            noise = torch.randn(2, args.latent_dim)
-            gen_imgs = generator(noise)
-            img1, img2 = gen_imgs[0, :].detach(), gen_imgs[1, :].detach()
-            imgs = np.linspace(img1, img2, 9)
-            imgs = imgs.reshape((9, 28, 28))
+        f, ax = plt.subplots(1, 9)
+        noise = torch.randn(2, args.latent_dim)
+        inter_noise = torch.from_numpy(np.linspace(noise[0,:], noise[1,:], 9))
+        gen_imgs = generator(inter_noise)
+        gen_imgs = gen_imgs.reshape((9, 28, 28)).detach()
 
-            for i in range(9):
-                ax[j,i].imshow(imgs[i, :, :], cmap='gray')
-                ax[j,i].axis('off')
+        for i in range(9):
+            ax[i].imshow(gen_imgs[i, :, :], cmap='gray')
+            ax[i].axis('off')
 
         plt.savefig('images/interpolated.png')
         plt.show()
 
-        gen_imgs = gen_imgs.view(2, 1, 28, 28)
-        save_image(gen_imgs,
-                   'images/{}.png'.format('testing'),
-                   nrow=5, normalize=True)
+        # noise = torch.randn(25, args.latent_dim)
+        # gen_imgs = generator(noise)
+        # gen_imgs = gen_imgs.view(25, 1, 28, 28)
+        # save_image(gen_imgs,
+        #            'images/{}.png'.format('testing'),
+        #            nrow=5, normalize=True)
 
     else:
         main()
