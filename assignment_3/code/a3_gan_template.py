@@ -95,10 +95,18 @@ def train(dataloader, discriminator, generator, optimizer_G, optimizer_D, device
             real_labels = torch.ones(batch_size, 1).to(device)
             fake_labels = torch.zeros(batch_size, 1).to(device)
 
+            # Train Generator
+            # ---------------
+            noise = torch.randn(batch_size, args.latent_dim).to(device)
+            optimizer_G.zero_grad()
+            gen_imgs = generator(noise)
+            gen_imgs_probs = discriminator(gen_imgs)
+            loss_gen = criterion(gen_imgs_probs, real_labels)  # Tries to make real images
+            loss_gen.backward()
+            optimizer_G.step()
+
             # Train Discriminator
             # -------------------
-            noise = torch.randn(batch_size, args.latent_dim).to(device)
-            gen_imgs = generator(noise)
             optimizer_D.zero_grad()
             real_imgs_probs = discriminator(imgs)
             loss_real_img = criterion(real_imgs_probs, real_labels)
@@ -110,21 +118,11 @@ def train(dataloader, discriminator, generator, optimizer_G, optimizer_D, device
             loss_fake_img.backward()
             optimizer_D.step()
 
-            # Train Generator
-            # ---------------
-            #noise = torch.randn(batch_size, args.latent_dim).to(device)
-            optimizer_G.zero_grad()
-            #gen_imgs = generator(noise)
-            gen_imgs_probs = discriminator(gen_imgs)
-            loss_gen = criterion(gen_imgs_probs, real_labels)  # Tries to make real images
-            loss_gen.backward()
-            optimizer_G.step()
-
-            if i % 100 == 0:
-                print(loss_gen.item(), loss_real_img.item(), loss_fake_img.item())
-                acc_real = torch.sum(real_imgs_probs > 0.5).item()/real_imgs_probs.shape[0]
-                acc_fake = torch.sum(gen_imgs_probs < 0.5).item()/gen_imgs_probs.shape[0]
-                print("acc real:" + str(acc_real) + " acc fake:" + str(acc_fake))
+            # if i % 100 == 0:
+            #     print(loss_gen.item(), loss_real_img.item(), loss_fake_img.item())
+            #     acc_real = torch.sum(real_imgs_probs > 0.5).item()/real_imgs_probs.shape[0]
+            #     acc_fake = torch.sum(gen_imgs_probs < 0.5).item()/gen_imgs_probs.shape[0]
+            #     print("acc real:" + str(acc_real) + " acc fake:" + str(acc_fake))
 
             # Save Images
             # -----------
@@ -135,7 +133,7 @@ def train(dataloader, discriminator, generator, optimizer_G, optimizer_D, device
                 # images, e.g.:
                 gen_imgs = gen_imgs.view(batch_size, 1, imgs.shape[2], imgs.shape[3])
                 save_image(gen_imgs[:25],
-                           'images/{}.png'.format(batches_done),
+                           'images/{}.png'.format(epoch + 1),
                            nrow=5, normalize=True)
 
         end = time.time()
