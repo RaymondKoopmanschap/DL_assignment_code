@@ -162,7 +162,6 @@ def save_elbo_plot(train_curve, val_curve, filename):
 
 
 def main():
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     torch.manual_seed(42)
     data = bmnist()[:2]  # ignore test split
     model = VAE(z_dim=ARGS.zdim)
