@@ -285,9 +285,9 @@ def main():
         #  You can use the make_grid functionality that is already imported.
         #  Save grid to images_nfs/
         # --------------------------------------------------------------------
-        if (epoch + 1) % 5 == 0:
+        if (epoch + 1) % 1 == 0:
             imgs = model.sample(25).cpu().detach()
-            grid = make_grid(imgs, nrow=5).permute(1, 2, 0)
+            grid = make_grid(imgs, nrow=5, normalize=True).permute(1, 2, 0)
             plt.imshow(grid)
             plt.savefig('images_nfs/{}.png'.format(epoch + 1))
 
@@ -296,7 +296,7 @@ def main():
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--epochs', default=40, type=int,
+    parser.add_argument('--epochs', default=1, type=int,
                         help='max number of epochs')
 
     ARGS = parser.parse_args()
