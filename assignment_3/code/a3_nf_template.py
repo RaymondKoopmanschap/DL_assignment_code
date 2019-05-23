@@ -285,7 +285,7 @@ def main():
         #  You can use the make_grid functionality that is already imported.
         #  Save grid to images_nfs/
         # --------------------------------------------------------------------
-        if (epoch + 1) % 1 == 0:
+        if (epoch + 1) % 5 == 0:
             imgs = model.sample(25).cpu().detach()
             grid = make_grid(imgs, nrow=5, normalize=True).permute(1, 2, 0)
             plt.imshow(grid)
