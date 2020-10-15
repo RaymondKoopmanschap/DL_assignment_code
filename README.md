@@ -1,4 +1,4 @@
-# Deep learning assignments
+# Deep learning assignments (using PyTorch)
 This assignments are for the course Deep learning and cover: MLPs and CNNs in the first assignment, LSTMs and GraphNNs in the second assignment and 
 VAEs, GANs and generative normalizing flows in the third assignment. 
 
