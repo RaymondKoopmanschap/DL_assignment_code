@@ -93,15 +93,6 @@ def train(config):
     optimizer = optim.Adam(model.parameters(), config.learning_rate)
     offset = 0
 
-    # Loading model if available
-    # load_model = False
-    # if load_model:
-    #     checkpoint = torch.load("model1000.pt")
-    #     model.load_state_dict(checkpoint["model_state"])
-    #     optimizer.load_state_dict((checkpoint["optimizer_state"]))
-    #     dataset = checkpoint["dataset"]
-    #     data_loader = DataLoader(dataset, config.batch_size, num_workers=1)
-    #     offset = checkpoint["offset"]
 
     for step, (batch_inputs, batch_targets) in enumerate(data_loader):
 
@@ -190,10 +181,6 @@ def train(config):
             break
 
     print('Done training.')
-
-
- ################################################################################
- ################################################################################
 
 if __name__ == "__main__":
 

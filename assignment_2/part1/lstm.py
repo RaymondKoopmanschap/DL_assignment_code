@@ -32,35 +32,26 @@ class LSTM(nn.Module):
 
         # g
         self.W_gx = nn.Parameter(torch.randn(num_hidden, input_dim))
-        #nn.init.xavier_uniform_(self.W_gx)
         self.W_gh = nn.Parameter(torch.randn(num_hidden, num_hidden))
-        #nn.init.xavier_uniform_(self.W_gh)
         self.b_g = nn.Parameter(torch.zeros(num_hidden, 1))
 
         # i
         self.W_ix = nn.Parameter(torch.randn(num_hidden, input_dim))
-        #nn.init.xavier_uniform_(self.W_ix)
         self.W_ih = nn.Parameter(torch.randn(num_hidden, num_hidden))
-        #nn.init.xavier_uniform_(self.W_ih)
         self.b_i = nn.Parameter(torch.zeros(num_hidden, 1))
 
         # f
         self.W_fx = nn.Parameter(torch.randn(num_hidden, input_dim))
-        #nn.init.xavier_uniform_(self.W_fx)
         self.W_fh = nn.Parameter(torch.randn(num_hidden, num_hidden))
-        #nn.init.xavier_uniform_(self.W_fh)
         self.b_f = nn.Parameter(torch.zeros(num_hidden, 1))
 
         # o
         self.W_ox = nn.Parameter(torch.randn(num_hidden, input_dim))
-        #nn.init.xavier_uniform_(self.W_ox)
         self.W_oh = nn.Parameter(torch.randn(num_hidden, num_hidden))
-        #nn.init.xavier_uniform_(self.W_oh)
         self.b_o = nn.Parameter(torch.zeros(num_hidden, 1))
 
         # p
         self.W_ph = nn.Parameter(torch.randn(num_classes, num_hidden))
-        #nn.init.xavier_uniform_(self.W_ph)
         self.b_p = nn.Parameter(torch.zeros(num_classes, 1))
 
         self.seq_length = seq_length

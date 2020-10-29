@@ -206,13 +206,6 @@ if __name__ == "__main__":
         plt.savefig('images/interpolated.png')
         plt.show()
 
-        # noise = torch.randn(25, args.latent_dim)
-        # gen_imgs = generator(noise)
-        # gen_imgs = gen_imgs.view(25, 1, 28, 28)
-        # save_image(gen_imgs,
-        #            'images/{}.png'.format('testing'),
-        #            nrow=5, normalize=True)
-
     else:
         main()
 

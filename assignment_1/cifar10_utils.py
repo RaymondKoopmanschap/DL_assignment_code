@@ -1,6 +1,5 @@
 """
 This module implements utility functions for downloading and reading CIFAR10 data.
-You don't need to change anything here.
 """
 from __future__ import absolute_import
 from __future__ import division

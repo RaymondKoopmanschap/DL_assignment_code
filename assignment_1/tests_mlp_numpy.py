@@ -16,12 +16,6 @@ class mlp_numpy_test(unittest.TestCase):
         self.assertEqual(len(network.lin_layers), 1 + len(n_hidden))
         self.assertEqual(len(network.relu_layers), len(n_hidden))
 
-#
-#
-# if __name__ == '__main__':
-#
-#     unittest.main()
-#
 
 # Initialization
 batch_size = 200

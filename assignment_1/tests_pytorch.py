@@ -8,6 +8,7 @@ from assignment_1 import cifar10_utils
 torch.manual_seed(42)
 np.random.seed(42)
 
+
 class Net(nn.Module):
 
     def __init__(self, n_inputs, n_hidden, n_classes):

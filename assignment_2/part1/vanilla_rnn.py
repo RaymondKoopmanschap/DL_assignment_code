@@ -34,14 +34,11 @@ class VanillaRNN(nn.Module):
 
         self.W_hx = nn.Parameter(torch.empty(num_hidden, input_dim))
         nn.init.orthogonal_(self.W_hx)
-        #nn.init.uniform_(self.W_hx, -std, std)
         self.W_hh = nn.Parameter(torch.empty(num_hidden, num_hidden))
         nn.init.orthogonal_(self.W_hh)
-        #nn.init.uniform_(self.W_hh, -std, std)
         self.b_h = nn.Parameter(torch.zeros(num_hidden, 1))
         self.W_ph = nn.Parameter(torch.empty(num_classes, num_hidden))
         nn.init.orthogonal_(self.W_ph)
-        #nn.init.uniform_(self.W_ph, -std, std)
         self.b_p = nn.Parameter(torch.zeros(num_classes, 1))
 
         self.num_hidden = num_hidden
@@ -49,15 +46,7 @@ class VanillaRNN(nn.Module):
         self.batch_size = batch_size
         self.device = device
 
-        # self.rnn = nn.RNN(input_dim, num_hidden, 1, batch_first=True)
-        # self.linear = nn.Linear(num_hidden, num_classes)
-
     def forward(self, x):
-        # print(x.shape)
-        # x = x[:, :, None]
-        # rnn_out, self.hidden = self.rnn(x)
-        # y_pred = self.linear(rnn_out)
-        # return y_pred[:, 4, :]
         h_t = self.h_init
         for i in range(self.seq_length):
             # Reshape into correct form

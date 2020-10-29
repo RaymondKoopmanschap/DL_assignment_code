@@ -144,19 +144,6 @@ def train(config):
     print("Test accuracy: " + str(accuracy))
     accuracies_test.append(mean_test_acc)
 
-    # plt.figure(1)
-    # plt.rcParams['font.size'] = 15
-    # plt.plot(config.input_length, accuracies_test, label="Accuracies test set")
-    # plt.plot(config.input_length, accuracies_train, label="Accuracies train set")
-    # plt.xlabel("Palindrome length")
-    # plt.ylabel("Accuracy")
-    # plt.title("Accuracies RNN")
-    # plt.legend()
-    # plt.savefig("Accuracies_RNN.png")
-    # plt.show()
- ################################################################################
- ################################################################################
-
 if __name__ == "__main__":
 
     # Parse training configuration

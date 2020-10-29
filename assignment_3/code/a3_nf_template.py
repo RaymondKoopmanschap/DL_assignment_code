@@ -83,9 +83,6 @@ class Coupling(torch.nn.Module):
         # Make sure to account for the log Jacobian determinant (ldj).
         # For reference, check: Density estimation using RealNVP.
 
-        # NOTE: For stability, it is advised to model the scale via:
-        # log_scale = tanh(h), where h is the scale-output
-        # from the NN.
         split = z * self.mask
 
         both = self.nn(split)
@@ -145,7 +142,6 @@ class Model(nn.Module):
         alpha = 1e-5
 
         if not reverse:
-            # Divide by 256 and update ldj.
             z = z / 256.
             logdet -= np.log(256) * np.prod(z.size()[1:])
 
@@ -159,7 +155,6 @@ class Model(nn.Module):
             logdet += torch.sum(torch.log(z) + torch.log(1-z), dim=1)
             z = torch.sigmoid(z)
 
-            # Multiply by 256.
             z = z * 256.
             logdet += np.log(256) * np.prod(z.size()[1:])
 

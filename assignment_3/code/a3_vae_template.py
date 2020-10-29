@@ -176,21 +176,12 @@ def main():
         val_curve.append(val_elbo)
         print(f"[Epoch {epoch}] train elbo: {train_elbo} val_elbo: {val_elbo}")
 
-        # --------------------------------------------------------------------
-        #  Add functionality to plot samples from model during training.
-        #  You can use the make_grid functionality that is already imported.
-        # --------------------------------------------------------------------
         if (epoch + 1) % 5 == 0:
             sampled_ims, im_means = model.sample(25)
             grid = make_grid(im_means, nrow=5).permute(1, 2, 0)
             plt.imshow(grid)
             plt.savefig('images_vae/{}_means.png'.format(epoch + 1))
 
-    # --------------------------------------------------------------------
-    #  Add functionality to plot the learned data manifold after
-    #  if required (i.e., if zdim == 2). You can use the make_grid
-    #  functionality that is already imported.
-    # --------------------------------------------------------------------
 
     # I took this code from https://www.quora.com/How-can-I-draw-a-manifold-from-a-variational-autoencoder-in-Keras
     if ARGS.zdim == 2:
