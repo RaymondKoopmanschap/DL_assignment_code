@@ -1,8 +1,6 @@
-# Deep learning assignments
+# Deep learning assignments (using PyTorch)
 This assignments are for the course Deep learning and cover: MLPs and CNNs in the first assignment, LSTMs and GraphNNs in the second assignment and 
 VAEs, GANs and generative normalizing flows in the third assignment. 
-
-TODO: requirements.txt
 
 Below is a guide on how to execute them. 
 
@@ -23,9 +21,9 @@ can be found in the corresponding python file. This trained model can then be us
 `python generation.py --text_completion text to be comple --length_pred 20`
 with text that needs to be completed and the model will generate 20 new letters.
 
-### Assignment 3 (VAE, GAN, Normalizing flows)
+## Assignment 3 (VAE, GAN, Normalizing flows)
 These models can be trained and tested using
-`python a3_vae_template.py` or replace gan by gan or nf. 
+`python a3_vae_template.py` or replace vae by gan or nf. 
 
 This produced cool pictures like the manifolds with VAEs
 ![](https://github.com/RaymondKoopmanschap/DL_assignment_code/blob/master/assignment_3/code/manifold.png?raw=true)
