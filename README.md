@@ -23,7 +23,7 @@ with text that needs to be completed and the model will generate 20 new letters.
 
 ## Assignment 3 (VAE, GAN, Normalizing flows)
 These models can be trained and tested using
-`python a3_vae_template.py` or replace gan by gan or nf. 
+`python a3_vae_template.py` or replace vae by gan or nf. 
 
 This produced cool pictures like the manifolds with VAEs
 ![](https://github.com/RaymondKoopmanschap/DL_assignment_code/blob/master/assignment_3/code/manifold.png?raw=true)
